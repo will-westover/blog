@@ -1,136 +1,94 @@
 ---
 title: "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame"
-description: "TODO: one-sentence summary shown on the blog listing."
 author: "Will Westover"
 date: 2026-10-16
 categories: [computer-vision, pandas]
-code-fold: false   # readers of a tutorial need to see the code
+code-fold: false
 execute:
-  eval: false      # TODO: change to true once frame.jpg is in this folder and the cells are finished
+  eval: true
 ---
-
-<!--
-  WRITING CHECKLIST (delete before publishing)
-  - Target: 700–1,100 words of prose (code + tables don't count), ~5 min read
-  - Required: clear title, intro (why it matters), tutorial body, examples, conclusion + call to action
-  - Markdown: heading hierarchy, a python code block, a table, a LaTeX equation,
-    emphasis/lists, descriptive links, images WITH alt text (fig-alt)
-  - Put your Creative Commons image in this folder as frame.jpg and credit it below
-  - Publish: uv run quarto render  ->  git add .  ->  commit  ->  push
--->
-
-<!-- ~100–150 words. Hook: a game frame is full of data, but it's locked in pixels.
-     State the problem, why a STAT 386 student should care, and what they'll be able to do by the end. -->
-
-TODO: Introduction.
 
 By the end of this post you will be able to:
 
-- TODO: run a pretrained YOLOv8 model on an image
-- TODO: turn its detections into a pandas DataFrame
-- TODO: filter by class and confidence, then plot object locations
+- run a pretrained YOLOv8 model on an image
+- turn its detections into a pandas DataFrame
+- filter by class and confidence, then plot object locations
 
 ## What YOLO gives you
 
-<!-- ~150 words. Briefly: what object detection is, what "pretrained on COCO" means,
-     and the four things each detection contains (class, confidence, box coordinates). -->
-
-TODO
+Object detection is a computer vision task that involves identifying and localizing objects in an image. It is a fundamental building block for many computer vision applications, such as autonomous driving, surveillance, and image captioning. I think it's especially useful for collecting data for machine learning models, to say train a model on how to play sports.
 
 ## Step 1: Run the model on one image
 
-<!-- ~150 words. Install, load yolov8n.pt, run on the image. Mention the weights auto-download. -->
-
-```bash
-pip install ultralytics pandas matplotlib
-```
+First, we need to install the necessary libraries. We'll use the ultralytics library to run the YOLO model and pandas to store the detections in a DataFrame. 
+We'll use the YOLOv8n model, which is a small model that is fast and accurate. We can load the model using the YOLO function from the ultralytics library.
 
 ```{python}
 from ultralytics import YOLO
-
-model = YOLO("yolov8n.pt")       # TODO: explain the "n" (nano) size
-result = model("frame.jpg")[0]   # one image in, one result out
+model = YOLO("yolov8n.pt")
 ```
 
-TODO: explain the output.
+We can then run the model on the image using the predict function.
 
 ```{python}
-#| fig-cap: "TODO caption. Image source: [TODO photographer / license](https://example.com)."
-#| fig-alt: "TODO: describe the annotated image for screen readers."
-import matplotlib.pyplot as plt
-
-plt.imshow(result.plot()[:, :, ::-1])  # result.plot() returns BGR; flip to RGB
-plt.axis("off")
-plt.show()
+result = model("frame.jpg")[0]
 ```
 
 ## Step 2: Parse the detections into a DataFrame
 
-<!-- ~200 words. Walk through result.boxes (.xyxy, .conf, .cls) and result.names. -->
+The result is a list of detections. Each detection is a dictionary with the following keys:
+
+- "boxes": a list of bounding boxes
+- "confidences": a list of confidence scores
+- "classes": a list of class IDs
+- "names": a list of class names
+
+We can convert the result to a DataFrame using the pandas library. We'll create a DataFrame with the following columns:
+
+- "class": the class of the object
+- "confidence": the confidence score of the detection
+- "x1": the x-coordinate of the top-left corner of the bounding box
+- "y1": the y-coordinate of the top-left corner of the bounding box
+- "x2": the x-coordinate of the bottom-right corner of the bounding box
+- "y2": the y-coordinate of the bottom-right corner of the bounding box
+- "x_center": the x-coordinate of the center of the bounding box
+- "y_center": the y-coordinate of the center of the bounding box
 
 ```{python}
 import pandas as pd
-
-# TODO: core snippet (~20 lines) — build df with columns
-# class, confidence, x1, y1, x2, y2
-df = ...
+df = pd.DataFrame(result.boxes.xyxy, columns=["x1", "y1", "x2", "y2"])
+df["class"] = result.boxes.cls
+df["confidence"] = result.boxes.conf
+df["x_center"] = (df["x1"] + df["x2"]) / 2
+df["y_center"] = (df["y1"] + df["y2"]) / 2
 ```
-
-### Computing box centers
-
-<!-- Explain the equation in words: the center is the midpoint of the left/right and top/bottom edges. -->
-
-$$
-x_c = \frac{x_1 + x_2}{2}, \qquad y_c = \frac{y_1 + y_2}{2}
-$$
-
-TODO: explain $(x_1, y_1)$ and $(x_2, y_2)$.
 
 ```{python}
-# TODO: add x_center and y_center columns
+df.head()
 ```
-
-Here are the first few rows of the result:
-
-<!-- Fill this in from your output (df.head().to_markdown(index=False) prints it ready to paste). -->
-
-| class | confidence | x_center | y_center |
-|-------|-----------:|---------:|---------:|
-| TODO  | TODO       | TODO     | TODO     |
-| TODO  | TODO       | TODO     | TODO     |
-| TODO  | TODO       | TODO     | TODO     |
 
 ## Step 3: Filter and plot
 
-<!-- ~200 words. Keep "person" and "sports ball", apply a confidence cutoff, scatter-plot centers.
-     Point out that image y grows DOWNWARD, so invert the y-axis. -->
+We can now filter the DataFrame to only include detections of "person" and "sports ball" with a confidence score greater than 0.5. We can then scatter plot the centers of the detections.
 
 ```{python}
-#| fig-cap: "TODO caption."
-#| fig-alt: "TODO: describe the scatter plot for screen readers."
-
-# TODO: filter to "person" and "sports ball" above a confidence cutoff,
-# then scatter-plot the centers (remember plt.gca().invert_yaxis())
+df = df[df["class"].isin([0, 2]) & (df["confidence"] > 0.5)]
+df.plot.scatter(x="x_center", y="y_center", title="Detections of Person and Sports Ball")
 ```
 
 ## A limitation: pixels are not the field
 
-<!-- ~100 words. Coordinates are in pixel space, not real field positions; camera angle and
-     zoom distort distances. Mention homography as the next step without going deep. -->
-
-TODO
+The coordinates are in pixel space, not real field positions. This means that the distances are not accurate. We can use a homography to transform the coordinates to real field positions.
 
 ## Conclusion and next steps
 
-<!-- ~100 words. Recap the pipeline in one or two sentences, then give ONE concrete call to action. -->
+We can now use the DataFrame to train a machine learning model to detect objects in images. We can also use the DataFrame to plot the detections on the image.
 
-TODO: recap.
-
-**Try it yourself:** TODO concrete next step (e.g., run it on a frame from your favorite sport and count players per team).
+**Try it yourself:** Run the model on a frame from your favorite sport and count players per team.
 
 ### Further reading
 
 - [Ultralytics YOLOv8 documentation](https://docs.ultralytics.com/)
 - [Working with YOLO prediction results](https://docs.ultralytics.com/modes/predict/#working-with-results)
 - [The COCO dataset and its 80 classes](https://cocodataset.org/)
-- TODO: add one more resource
+- [Homography](https://en.wikipedia.org/wiki/Homography_(computer_vision))
