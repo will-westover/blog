@@ -5,3 +5,7 @@ __pycache__/
 /.quarto/
 **/*.quarto_ipynb
 _PLAN.md
+.vscode/
+# quarto preview leftovers (real copies live under docs/)
+/site_libs/
+/posts/**/index_files/

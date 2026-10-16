@@ -1,41 +1,57 @@
 ---
 title: "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame"
+categories: [computer-vision, pandas]
+description: "A simple way to turn images into data!"
 author: "Will Westover"
 date: 2026-10-16
-categories: [computer-vision, pandas]
 code-fold: false
 execute:
   eval: true
 ---
+## Premise
+A picture from a soccer game holds a lot of information: where every player is standing, how close someone is to the ball, how spread out the defense is. For a human (who esentially has two GPUs as part of their preforntal cortex) it's easy to understand what's going on. But for a computer its a grid of pixel colors embedded as numbers.  The question I'm hoping to take you all through is: how do you get from a photo to a DataFrame? In a few lines of Python, we will have a pretty cool way to do this.
 
 By the end of this post you will be able to:
 
-- run a pretrained YOLOv8 model on an image
-- turn its detections into a pandas DataFrame
-- filter by class and confidence, then plot object locations
+- use a pretrained YOLOv8 model to detect objects in an image
+- turn the detections into a pandas DataFrame
+- filter by class and confidence, then plot object locations on the image
 
-## What YOLO gives you
+## What you can do with YOLO
 
-Object detection is a computer vision task that involves identifying and localizing objects in an image. It is a fundamental building block for many computer vision applications, such as autonomous driving, surveillance, and image captioning. I think it's especially useful for collecting data for machine learning models, to say train a model on how to play sports.
+Object detection is a computer vision task that involves identifying and localizing objects in an image. It is a building block for many computer vision applications.
 
-## Step 1: Run the model on one image
+YOLO stands for "You Only Look Once" and it holds a number of object detection models. The version we'll use, YOLOv8 from Ultralytics, comes *pretrained* on a dataset called COCO, which contains lots of photos which are hand labeled. Two of the classes from COCO are exactly what we need for soccer: "person" and "sports ball". We basically just download the weights and run the model. 
 
-First, we need to install the necessary libraries. We'll use the ultralytics library to run the YOLO model and pandas to store the detections in a DataFrame. 
-We'll use the YOLOv8n model, which is a small model that is fast and accurate. We can load the model using the YOLO function from the ultralytics library.
+For every object gives you three things:
+
+- a **class**: what the object is, such as "person"
+- a **confidence score** between 0 and 1: how sure the model is
+- **box coordinates**: the corners of a rectangle around the object, in pixels
+
+## Step 1: Run the Model
+
+First, install the libraries (tabulate lets pandas print Markdown tables):
+
+```bash
+pip install ultralytics pandas matplotlib tabulate
+```
+
+We load the model with the `YOLO` class from ultralytics. We'll use YOLOv8n, the smallest and fastest of the five sizes (n, s, m, l, x). It's also the least accurate, but for a single frame that trade-off is fine. The weights file downloads automatically the first time you run the code.
 
 ```{python}
 from ultralytics import YOLO
 model = YOLO("yolov8n.pt")
 ```
 
-We can then run the model on the image using the predict function.
+Then we run it on our frame. `model("frame.jpg")` is shorthand for `model.predict("frame.jpg")`. It returns a list with one Results object per image, and since we passed in one image, we take `[0]`.
 
 ```{python}
 #| output: false
 result = model("frame.jpg")[0]
 ```
 
-Here is what the model sees in our frame, plus four more matches. Use the arrows to click through them.
+Here is what the model sees in our frame, plus four photos from other games. Use the arrows to click through them. The boxes around the objects are the detections from the model.
 
 ```{python}
 #| echo: false
@@ -108,57 +124,82 @@ print("</div>")
 print("```")
 ```
 
-## Step 2: Parse the detections into a DataFrame
+In our frame the model found 14 people and the ball, but only some of those boxes are worth keeping. The low-confidence ones are mostly small spectators behind the fence and extra boxes drawn over players it had already found. It's pretty cool that we can just filter those lower confidence people out of the model.
 
-The result is a list of detections. Each detection is a dictionary with the following keys:
+## Step 2: Turn the detections into a data frame
 
-- "boxes": a list of bounding boxes
-- "confidences": a list of confidence scores
-- "classes": a list of class IDs
-- "names": a list of class names
+The result is a Results object, not a table. The detections live in a few parallel arrays:
 
-We can convert the result to a DataFrame using the pandas library. We'll create a DataFrame with the following columns:
+- `result.boxes.xyxy`: one row of box corners (x1, y1, x2, y2) per detection
+- `result.boxes.conf`: one confidence score per detection
+- `result.boxes.cls`: one class ID (a number) per detection
+- `result.names`: a dictionary that maps class IDs to names, such as `{0: "person", 32: "sports ball"}`
 
-- "class": the class of the object
-- "confidence": the confidence score of the detection
-- "x1": the x-coordinate of the top-left corner of the bounding box
-- "y1": the y-coordinate of the top-left corner of the bounding box
-- "x2": the x-coordinate of the bottom-right corner of the bounding box
-- "y2": the y-coordinate of the bottom-right corner of the bounding box
-- "x_center": the x-coordinate of the center of the bounding box
-- "y_center": the y-coordinate of the center of the bounding box
+These line up by position, so row *i* of each one describes the same detection. That makes it easy to put them side by side in a DataFrame with one row per detection: the box corners (`x1`, `y1` top-left and `x2`, `y2` bottom-right), the `class` name, the `confidence`, and the box center (`x_center`, `y_center`).
 
 ```{python}
 import pandas as pd
 df = pd.DataFrame(result.boxes.xyxy, columns=["x1", "y1", "x2", "y2"])
-df["class"] = result.boxes.cls
+df["class"] = [result.names[int(c)] for c in result.boxes.cls]
 df["confidence"] = result.boxes.conf
 df["x_center"] = (df["x1"] + df["x2"]) / 2
 df["y_center"] = (df["y1"] + df["y2"]) / 2
 ```
 
+The last two lines use the box-center equation:
+
+$$
+x_c = \frac{x_1 + x_2}{2}, \qquad y_c = \frac{y_1 + y_2}{2}
+$$
+
+This means that the center is the average of the left and right edges (for $x$) and the average of the top and bottom edges (for $y$). For plotting, we want one point per object, and the center is the natural choice.
+
+Here are the first five rows of the DataFrame. YOLO sorts detections by confidence, so the ball (0.90) comes first.
+
 ```{python}
-df.head()
+#| echo: false
+#| output: asis
+print(df.head().round(2).to_markdown(index=False))
 ```
 
 ## Step 3: Filter and plot
 
-We can now filter the DataFrame to only include detections of "person" and "sports ball" with a confidence score greater than 0.5. We can then scatter plot the centers of the detections.
+Now we filter the DataFrame to keep only "person" and "sports ball" detections with a confidence score above 0.5. We save the result as `players` so the full `df` stays around.
 
 ```{python}
-df = df[df["class"].isin([0, 2]) & (df["confidence"] > 0.5)]
-df.plot.scatter(x="x_center", y="y_center", title="Detections of Person and Sports Ball")
+players = df[df["class"].isin(["person", "sports ball"]) & (df["confidence"] > 0.5)]
+players["class"].value_counts()
 ```
+
+Why 0.5? YOLO's default cutoff is 0.25, which keeps all 14 people. Raising it to 0.5 drops 7 of them: four small figures in the background and three partial or duplicate boxes. It isn't perfect, though. Two spectators by the fence score above 0.5, and the player in white partly hidden behind the tackle scores only 0.40, so he gets cut. A cutoff is a trade-off, so check it against the image.
+
+Finally, we plot the box centers on top of the frame:
+
+```{python}
+#| fig-cap: "Centers of detections with confidence above 0.5, drawn on the original frame."
+#| fig-alt: "The soccer frame with dots on five players and two spectators by the fence, and a different-colored dot on the ball at the bottom center."
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(8, 5.5))
+ax.imshow(plt.imread("frame.jpg"))
+for name, group in players.groupby("class"):
+    ax.scatter(group["x_center"], group["y_center"], s=60, edgecolors="white", label=name)
+ax.legend()
+ax.set_axis_off()
+plt.show()
+```
+
+Pixel $y$ grows downward, and `imshow` handles that for us. If you plot the centers without the image, call `ax.invert_yaxis()` or the plot comes out upside down.
 
 ## A limitation: pixels are not the field
 
-The coordinates are in pixel space, not real field positions. This means that the distances are not accurate. We can use a homography to transform the coordinates to real field positions.
+The coordinates are in pixel space, not real field positions, so distances measured in pixels are misleading. Two players 100 px apart near the camera are much closer together on the field than two players 100 px apart far from the camera. A homography fixes that by mapping pixels to field coordinates using at least four points whose real positions you know, like the corners of the penalty box. Our frame doesn't show enough field markings for that, but it's the next step if you want distances in meters.
 
 ## Conclusion and next steps
 
-We can now use the DataFrame to train a machine learning model to detect objects in images. We can also use the DataFrame to plot the detections on the image.
+We went from a photo to a table: run a pretrained YOLO model on the image, pull the detections into a DataFrame, filter by class and confidence, and plot the results. Once the frame is a DataFrame, all of the usual pandas tools apply. You can count players, find who is closest to the ball, or measure how spread out a team is. Run the model on every frame of a video and stack the DataFrames, and you can start tracking how players move.
 
-**Try it yourself:** Run the model on a frame from your favorite sport and count players per team.
+**Try it yourself:** Feel free to use this code and run the model yourself! It should work really for most sports since most sports have a ball and players.
 
 ### Further reading
 
