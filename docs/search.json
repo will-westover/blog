@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "blog.html",
+    "href": "blog.html",
+    "title": "Blog",
+    "section": "",
+    "text": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame\n\n\n\ncomputer-vision\n\npandas\n\n\n\nTODO: one-sentence summary shown on the blog listing.\n\n\n\n\n\nOct 16, 2026\n\n\nWill Westover\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Will Westover",
+    "section": "",
+    "text": "TODO: a short introduction: who you are and what you write about (sports analytics, computer vision).\nSee the blog for tutorials."
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html",
+    "href": "posts/yolo-detections-to-dataframe/index.html",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "",
+    "text": "TODO: Introduction.\nBy the end of this post you will be able to:"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#what-yolo-gives-you",
+    "href": "posts/yolo-detections-to-dataframe/index.html#what-yolo-gives-you",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "What YOLO gives you",
+    "text": "What YOLO gives you\n\nTODO"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#step-1-run-the-model-on-one-image",
+    "href": "posts/yolo-detections-to-dataframe/index.html#step-1-run-the-model-on-one-image",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "Step 1: Run the model on one image",
+    "text": "Step 1: Run the model on one image\n\npip install ultralytics pandas matplotlib\n\nfrom ultralytics import YOLO\n\nmodel = YOLO(\"yolov8n.pt\")       # TODO: explain the \"n\" (nano) size\nresult = model(\"frame.jpg\")[0]   # one image in, one result out\n\nTODO: explain the output.\n\nimport matplotlib.pyplot as plt\n\nplt.imshow(result.plot()[:, :, ::-1])  # result.plot() returns BGR; flip to RGB\nplt.axis(\"off\")\nplt.show()"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#step-2-parse-the-detections-into-a-dataframe",
+    "href": "posts/yolo-detections-to-dataframe/index.html#step-2-parse-the-detections-into-a-dataframe",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "Step 2: Parse the detections into a DataFrame",
+    "text": "Step 2: Parse the detections into a DataFrame\n\n\nimport pandas as pd\n\n# TODO: core snippet (~20 lines) — build df with columns\n# class, confidence, x1, y1, x2, y2\ndf = ...\n\n\nComputing box centers\n\n\\[\nx_c = \\frac{x_1 + x_2}{2}, \\qquad y_c = \\frac{y_1 + y_2}{2}\n\\]\nTODO: explain \\((x_1, y_1)\\) and \\((x_2, y_2)\\).\n\n# TODO: add x_center and y_center columns\n\nHere are the first few rows of the result:\n\n\n\n\nclass\nconfidence\nx_center\ny_center\n\n\n\n\nTODO\nTODO\nTODO\nTODO\n\n\nTODO\nTODO\nTODO\nTODO\n\n\nTODO\nTODO\nTODO\nTODO"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#step-3-filter-and-plot",
+    "href": "posts/yolo-detections-to-dataframe/index.html#step-3-filter-and-plot",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "Step 3: Filter and plot",
+    "text": "Step 3: Filter and plot\n\n\n# TODO: filter to \"person\" and \"sports ball\" above a confidence cutoff,\n# then scatter-plot the centers (remember plt.gca().invert_yaxis())"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#a-limitation-pixels-are-not-the-field",
+    "href": "posts/yolo-detections-to-dataframe/index.html#a-limitation-pixels-are-not-the-field",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "A limitation: pixels are not the field",
+    "text": "A limitation: pixels are not the field\n\nTODO"
+  },
+  {
+    "objectID": "posts/yolo-detections-to-dataframe/index.html#conclusion-and-next-steps",
+    "href": "posts/yolo-detections-to-dataframe/index.html#conclusion-and-next-steps",
+    "title": "From Pixels to a DataFrame: Using Pretrained YOLO to Structure a Sports Frame",
+    "section": "Conclusion and next steps",
+    "text": "Conclusion and next steps\n\nTODO: recap.\nTry it yourself: TODO concrete next step (e.g., run it on a frame from your favorite sport and count players per team).\n\nFurther reading\n\nUltralytics YOLOv8 documentation\nWorking with YOLO prediction results\nThe COCO dataset and its 80 classes\nTODO: add one more resource"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "TODO: a few sentences about yourself."
+  }
+]

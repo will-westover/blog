@@ -1,0 +1,7 @@
+---
+title: "Will Westover"
+---
+
+TODO: a short introduction: who you are and what you write about (sports analytics, computer vision).
+
+See the [blog](blog.qmd) for tutorials.
