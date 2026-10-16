@@ -31,7 +31,81 @@ model = YOLO("yolov8n.pt")
 We can then run the model on the image using the predict function.
 
 ```{python}
+#| output: false
 result = model("frame.jpg")[0]
+```
+
+Here is what the model sees in our frame, plus four more matches. Use the arrows to click through them.
+
+```{python}
+#| echo: false
+#| output: asis
+import base64
+import cv2
+
+examples = [
+    ("frame.jpg", "Kidsgrove Athletic v Mossley, 29 March 2025",
+     "https://commons.wikimedia.org/wiki/File:Kidsgrove_Athletic_v_Mossley,_29_March_2025_01.jpg",
+     "Dominic Nelson", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0"),
+    ("examples/shrewsbury-practice.jpg", "Shrewsbury Town practice match, 1 August 2014",
+     "https://commons.wikimedia.org/wiki/File:Ashley_Vincent,_English_footballer_born_1985,_playing_for_Shrewsbury_Town_in_a_practice_match_at_Moss_Lane,_Altrincham._1_August_2014.jpg",
+     "JMoore1987", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0"),
+    ("examples/leek-town-workington.jpg", "Leek Town v Workington, 12 April 2025",
+     "https://commons.wikimedia.org/wiki/File:Leek_Town_v_Workington,_12_April_2025_10.jpg",
+     "Dominic Nelson", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0"),
+    ("examples/hfx-wanderers-forge.jpg", "HFX Wanderers FC vs. Forge FC",
+     "https://commons.wikimedia.org/wiki/File:Andr%C3%A9_Bona_and_Kwame_Awuah_-_HFX_Wanderers_FC_vs._Forge_FC_(cropped).jpg",
+     "Indrid Cold", "CC BY-SA 2.0", "https://creativecommons.org/licenses/by-sa/2.0"),
+    ("examples/philippines-afghanistan.jpg", "Philippines vs Afghanistan, 12 September 2023",
+     "https://commons.wikimedia.org/wiki/File:Sebastian_Rasmussen_Running_to_the_Ball_Surrounded_by_Afghan_Players_-_PHI_vs_AFG,_September_12,_2023.png",
+     "Jethrude Hipolito", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0"),
+]
+
+slides, dots = [], []
+for i, (path, title, source, author, license, license_url) in enumerate(examples):
+    r = model(path, verbose=False)[0]
+    names = [r.names[int(c)] for c in r.boxes.cls]
+    confs = r.boxes.conf.tolist()
+    people = sum(n == "person" and c > 0.5 for n, c in zip(names, confs))
+    ball = max((c for n, c in zip(names, confs) if n == "sports ball"), default=None)
+    found = f"{people} people and the ball ({ball:.2f})" if ball else f"{people} people, no ball"
+
+    _, jpg = cv2.imencode(".jpg", r.plot(), [cv2.IMWRITE_JPEG_QUALITY, 80])
+    src = "data:image/jpeg;base64," + base64.b64encode(jpg).decode()
+    first = i == 0
+    slides.append(
+        f'<div class="carousel-item{" active" if first else ""}">'
+        f'<img src="{src}" class="d-block w-100" alt="{title}: soccer photo with YOLO boxes around {found}.">'
+        f'<p class="carousel-text">{i + 1}/{len(examples)}: YOLO found <strong>{found}</strong> (confidence &gt; 0.5).<br>'
+        f'Photo: <a href="{source}">{title}</a> by {author}, '
+        f'<a href="{license_url}">{license}</a>, via Wikimedia Commons, with detection boxes added.</p></div>'
+    )
+    current = ' class="active" aria-current="true"' if first else ""
+    dots.append(
+        f'<button type="button" data-bs-target="#yolo-examples" data-bs-slide-to="{i}" '
+        f'aria-label="Example {i + 1}"{current}></button>'
+    )
+
+print("```{=html}")
+print("""<style>
+#yolo-examples { max-width: 600px; margin: 0 auto; }
+#yolo-examples img { aspect-ratio: 4 / 3; object-fit: contain; background: #111; border-radius: 6px; }
+#yolo-examples .carousel-text { text-align: center; font-size: 0.85rem; margin: 0.5rem 3rem 0; }
+#yolo-examples .carousel-control-prev, #yolo-examples .carousel-control-next { width: 3rem; height: 75%; opacity: 1; }
+#yolo-examples .carousel-control-prev-icon, #yolo-examples .carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.6); border-radius: 50%; background-size: 55%; width: 2.25rem; height: 2.25rem; }
+#yolo-examples .carousel-indicators { position: static; margin: 0.5rem 0 1rem; }
+#yolo-examples .carousel-indicators [data-bs-target] { background-color: #6c757d; }
+</style>""")
+print('<div id="yolo-examples" class="carousel slide" data-bs-interval="false">')
+print('<div class="carousel-inner">' + "".join(slides) + "</div>")
+print('<button class="carousel-control-prev" type="button" data-bs-target="#yolo-examples" data-bs-slide="prev">'
+      '<span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>')
+print('<button class="carousel-control-next" type="button" data-bs-target="#yolo-examples" data-bs-slide="next">'
+      '<span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>')
+print('<div class="carousel-indicators">' + "".join(dots) + "</div>")
+print("</div>")
+print("```")
 ```
 
 ## Step 2: Parse the detections into a DataFrame
