@@ -247,7 +247,7 @@ window.Quarto = {
 
 <section id="premise" class="level2">
 <h2 class="anchored" data-anchor-id="premise">Premise</h2>
-<p>A picture from a soccer game holds a lot of information: where every player is standing, how close someone is to the ball, how spread out the defense is. For a human (who esentially has two GPUs as part of their preforntal cortex) it’s easy to understand what’s going on. But for a computer its a grid of pixel colors embedded as numbers. The question I’m hoping to take you all through is: how do you get from a photo to a DataFrame? In a few lines of Python, we will have a pretty cool way to do this.</p>
+<p>A picture from a soccer game holds a lot of information: where every player is standing, how close someone is to the ball, how spread out the defense is. For a human (who essentially has two GPUs as part of their prefrontal cortex) it’s easy to understand what’s going on. But for a computer it’s a grid of pixel colors embedded as numbers. The question I’m hoping to take you all through is: how do you get from a photo to a DataFrame? In a few lines of Python, we will have a pretty cool way to do this.</p>
 <p>By the end of this post you will be able to:</p>
 <ul>
 <li>use a pretrained YOLOv8 model to detect objects in an image</li>
@@ -258,8 +258,8 @@ window.Quarto = {
 <section id="what-you-can-do-with-yolo" class="level2">
 <h2 class="anchored" data-anchor-id="what-you-can-do-with-yolo">What you can do with YOLO</h2>
 <p>Object detection is a computer vision task that involves identifying and localizing objects in an image. It is a building block for many computer vision applications.</p>
-<p>YOLO stands for “You Only Look Once” and it holds a number of object detection models. The version we’ll use, YOLOv8 from Ultralytics, comes <em>pretrained</em> on a dataset called COCO, which contains lots of photos which are hand labeled. Two of the classes from COCO are exactly what we need for soccer: “person” and “sports ball”. We basically just download the weights and run the model.</p>
-<p>For every object gives you three things:</p>
+<p>YOLO stands for “You Only Look Once” and it holds a number of object detection models. The version we’ll use, YOLOv8 from Ultralytics, comes <em>pretrained</em> on a dataset called COCO, which contains lots of photos which are hand-labeled. Two of the classes from COCO are exactly what we need for soccer: “person” and “sports ball”. We basically just download the weights and run the model.</p>
+<p>For every object, it gives you three things:</p>
 <ul>
 <li>a <strong>class</strong>: what the object is, such as “person”</li>
 <li>a <strong>confidence score</strong> between 0 and 1: how sure the model is</li>
@@ -271,12 +271,12 @@ window.Quarto = {
 <p>First, install the libraries (tabulate lets pandas print Markdown tables):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install ultralytics pandas matplotlib tabulate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We load the model with the <code>YOLO</code> class from ultralytics. We’ll use YOLOv8n, the smallest and fastest of the five sizes (n, s, m, l, x). It’s also the least accurate, but for a single frame that trade-off is fine. The weights file downloads automatically the first time you run the code.</p>
-<div id="e57184a4" class="cell" data-execution_count="1">
+<div id="95cc2c4d" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> ultralytics <span class="im">import</span> YOLO</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> YOLO(<span class="st">"yolov8n.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Then we run it on our frame. <code>model("frame.jpg")</code> is shorthand for <code>model.predict("frame.jpg")</code>. It returns a list with one Results object per image, and since we passed in one image, we take <code>[0]</code>.</p>
-<div id="a12b03dd" class="cell" data-execution_count="2">
+<div id="1e4aa6c3" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> model(<span class="st">"frame.jpg"</span>)[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Here is what the model sees in our frame, plus four photos from other games. Use the arrows to click through them. The boxes around the objects are the detections from the model.</p>
@@ -308,7 +308,7 @@ window.Quarto = {
 <li><code>result.names</code>: a dictionary that maps class IDs to names, such as <code>{0: "person", 32: "sports ball"}</code></li>
 </ul>
 <p>These line up by position, so row <em>i</em> of each one describes the same detection. That makes it easy to put them side by side in a DataFrame with one row per detection: the box corners (<code>x1</code>, <code>y1</code> top-left and <code>x2</code>, <code>y2</code> bottom-right), the <code>class</code> name, the <code>confidence</code>, and the box center (<code>x_center</code>, <code>y_center</code>).</p>
-<div id="2568b901" class="cell" data-execution_count="4">
+<div id="421d2fe9" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(result.boxes.xyxy, columns<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"y1"</span>, <span class="st">"x2"</span>, <span class="st">"y2"</span>])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"class"</span>] <span class="op">=</span> [result.names[<span class="bu">int</span>(c)] <span class="cf">for</span> c <span class="kw">in</span> result.boxes.cls]</span>
@@ -402,7 +402,7 @@ x_c = \frac{x_1 + x_2}{2}, \qquad y_c = \frac{y_1 + y_2}{2}
 <section id="step-3-filter-and-plot" class="level2">
 <h2 class="anchored" data-anchor-id="step-3-filter-and-plot">Step 3: Filter and plot</h2>
 <p>Now we filter the DataFrame to keep only “person” and “sports ball” detections with a confidence score above 0.5. We save the result as <code>players</code> so the full <code>df</code> stays around.</p>
-<div id="a4896f18" class="cell" data-execution_count="6">
+<div id="dd52d502" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>players <span class="op">=</span> df[df[<span class="st">"class"</span>].isin([<span class="st">"person"</span>, <span class="st">"sports ball"</span>]) <span class="op">&amp;</span> (df[<span class="st">"confidence"</span>] <span class="op">&gt;</span> <span class="fl">0.5</span>)]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>players[<span class="st">"class"</span>].value_counts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -414,7 +414,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 <p>Why 0.5? YOLO’s default cutoff is 0.25, which keeps all 14 people. Raising it to 0.5 drops 7 of them: four small figures in the background and three partial or duplicate boxes. It isn’t perfect, though. Two spectators by the fence score above 0.5, and the player in white partly hidden behind the tackle scores only 0.40, so he gets cut. A cutoff is a trade-off, so check it against the image.</p>
 <p>Finally, we plot the box centers on top of the frame:</p>
-<div id="b1cfd409" class="cell" data-execution_count="7">
+<div id="9bcb0bb9" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">5.5</span>))</span>
@@ -442,7 +442,7 @@ Name: count, dtype: int64</code></pre>
 <section id="conclusion-and-next-steps" class="level2">
 <h2 class="anchored" data-anchor-id="conclusion-and-next-steps">Conclusion and next steps</h2>
 <p>We went from a photo to a table: run a pretrained YOLO model on the image, pull the detections into a DataFrame, filter by class and confidence, and plot the results. Once the frame is a DataFrame, all of the usual pandas tools apply. You can count players, find who is closest to the ball, or measure how spread out a team is. Run the model on every frame of a video and stack the DataFrames, and you can start tracking how players move.</p>
-<p><strong>Try it yourself:</strong> Feel free to use this code and run the model yourself! It should work really for most sports since most sports have a ball and players.</p>
+<p><strong>Try it yourself:</strong> Feel free to use this code and run the model yourself! It should work really well for most sports since most sports have a ball and players.</p>
 <section id="further-reading" class="level3">
 <h3 class="anchored" data-anchor-id="further-reading">Further reading</h3>
 <ul>

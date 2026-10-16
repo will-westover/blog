@@ -9,7 +9,7 @@ execute:
   eval: true
 ---
 ## Premise
-A picture from a soccer game holds a lot of information: where every player is standing, how close someone is to the ball, how spread out the defense is. For a human (who esentially has two GPUs as part of their preforntal cortex) it's easy to understand what's going on. But for a computer its a grid of pixel colors embedded as numbers.  The question I'm hoping to take you all through is: how do you get from a photo to a DataFrame? In a few lines of Python, we will have a pretty cool way to do this.
+A picture from a soccer game holds a lot of information: where every player is standing, how close someone is to the ball, how spread out the defense is. For a human (who essentially has two GPUs as part of their prefrontal cortex) it's easy to understand what's going on. But for a computer it's a grid of pixel colors embedded as numbers. The question I'm hoping to take you all through is: how do you get from a photo to a DataFrame? In a few lines of Python, we will have a pretty cool way to do this.
 
 By the end of this post you will be able to:
 
@@ -21,9 +21,9 @@ By the end of this post you will be able to:
 
 Object detection is a computer vision task that involves identifying and localizing objects in an image. It is a building block for many computer vision applications.
 
-YOLO stands for "You Only Look Once" and it holds a number of object detection models. The version we'll use, YOLOv8 from Ultralytics, comes *pretrained* on a dataset called COCO, which contains lots of photos which are hand labeled. Two of the classes from COCO are exactly what we need for soccer: "person" and "sports ball". We basically just download the weights and run the model. 
+YOLO stands for "You Only Look Once" and it holds a number of object detection models. The version we'll use, YOLOv8 from Ultralytics, comes *pretrained* on a dataset called COCO, which contains lots of photos which are hand-labeled. Two of the classes from COCO are exactly what we need for soccer: "person" and "sports ball". We basically just download the weights and run the model. 
 
-For every object gives you three things:
+For every object, it gives you three things:
 
 - a **class**: what the object is, such as "person"
 - a **confidence score** between 0 and 1: how sure the model is
@@ -199,7 +199,7 @@ The coordinates are in pixel space, not real field positions, so distances measu
 
 We went from a photo to a table: run a pretrained YOLO model on the image, pull the detections into a DataFrame, filter by class and confidence, and plot the results. Once the frame is a DataFrame, all of the usual pandas tools apply. You can count players, find who is closest to the ball, or measure how spread out a team is. Run the model on every frame of a video and stack the DataFrames, and you can start tracking how players move.
 
-**Try it yourself:** Feel free to use this code and run the model yourself! It should work really for most sports since most sports have a ball and players.
+**Try it yourself:** Feel free to use this code and run the model yourself! It should work really well for most sports since most sports have a ball and players.
 
 ### Further reading
 
