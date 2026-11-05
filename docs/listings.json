@@ -2,6 +2,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/hf-model-popularity/index.html",
       "/posts/yolo-detections-to-dataframe/index.html"
     ]
   }

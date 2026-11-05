@@ -1,0 +1,180 @@
+---
+title: "What Makes a Hugging Face Model Popular? Curating a Dataset of the 3,000 Most Downloaded Models"
+categories: [data-curation, apis, pandas]
+description: "Two free APIs, three scripts, and a dataset on which models people actually use."
+author: "Will Westover"
+date: 2026-11-04
+code-fold: true
+execute:
+  eval: true
+  warning: false
+---
+
+## Why I did this
+
+I spend a lot of time on [Hugging Face](https://huggingface.co/models). It is where almost every open model gets shared, and every model page shows a download count and a like count. Those two numbers are a pretty honest signal of what people actually use, not just what gets hyped on Twitter. So I wanted a dataset of the most downloaded models and enough features to ask a simple question:
+
+**Does a model's task, library, license, or size have anything to do with how popular it is?**
+
+And a second one that came out of the first: are downloads and likes even measuring the same thing?
+
+The code and the dataset are in the [hf-model-popularity repo](https://github.com/will-westover/hf-model-popularity).
+
+## Is this allowed?
+
+Before writing any code I checked three things:
+
+- [robots.txt](https://huggingface.co/robots.txt) is one line: `Allow: /`.
+- The [Hub API docs](https://huggingface.co/docs/hub/api) describe the endpoint I used as public, no token required. The [rate limit page](https://huggingface.co/docs/hub/rate-limits) says 500 requests per 5 minutes, and the response headers tell you how many you have left.
+- The [arXiv API](https://info.arxiv.org/help/api/index.html) is free and asks for about 3 seconds between requests.
+
+The data is metadata about models, not about people. The only person-like field is the author, which is a public username or org name. No model weights, no user data. So I felt fine publishing the CSV. I also sent a User-Agent that names the project and links to the repo, so anyone on their end can tell what the traffic is.
+
+## How to get the data
+
+Three scripts, no API key.
+
+### 1. One request per 1,000 models
+
+My plan was to list the top models, then hit the detail endpoint 3,000 times for license and parameter count. Turns out you don't need to. The list endpoint has an `expand[]` parameter that returns the extra fields in the same call, and `limit` goes up to 1,000. So the whole thing is 3 requests.
+
+```python
+params = {
+    "sort": "downloads", "direction": -1, "limit": 1000,
+    "expand[]": ["author", "pipeline_tag", "library_name", "tags", "cardData",
+                 "downloads", "downloadsAllTime", "likes", "createdAt",
+                 "lastModified", "safetensors", "gated"],
+}
+response = session.get("https://huggingface.co/api/models", params=params)
+next_url = response.links["next"]["url"]   # pagination comes from the Link header
+```
+
+The two things that tripped me up: pagination is a `Link` header, not a field in the JSON (`requests` parses it for you as `response.links`), and the license is not its own field. It lives in `tags` as `license:apache-2.0`, so you pull it out of the tag list.
+
+I save the raw JSON untouched, plus one flattened row per model. That way if I decide I want a different field later I don't have to hit the API again.
+
+### 2. Look up the papers
+
+About half of the models have `arxiv:1908.10084` style tags. The arXiv API takes a comma-separated `id_list`, so I sent 100 IDs per request (8 requests total, 3 seconds apart) and parsed the Atom XML with the standard library. That gives each paper's date and primary category (cs.CL, cs.CV, and so on).
+
+### 3. Clean
+
+The cleaning script joins the two raw files and makes the decisions I didn't want to make at collection time:
+
+- 329 models (11%) show a creation date of exactly 2022-03-02. That is the day the Hub migrated, not a real date, so I blank it and keep a `created_at_known` flag.
+- Parameter counts come from safetensors metadata, which 1,168 models don't have. Those stay missing rather than getting guessed.
+- Each model gets its earliest paper's date and category, a size bucket, and likes per million downloads.
+
+## The dataset
+
+3,000 rows, 28 columns, collected November 4, 2026. 789 different authors, 47 tasks, 99 libraries, 29 licenses.
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+
+BLUE, ORANGE, GRAY = "#2a78d6", "#eb6834", "#52514e"
+plt.rcParams.update({"axes.spines.top": False, "axes.spines.right": False, "axes.grid": True,
+                     "grid.alpha": 0.3, "axes.titlelocation": "left"})
+
+models = pd.read_csv("models_clean.csv", parse_dates=["created_at", "last_modified", "first_paper_date"])
+```
+
+```{python}
+#| output: asis
+summary = models[["downloads_all_time", "downloads_30d", "likes", "params_billions"]].describe().loc[["min", "25%", "50%", "75%", "max"]]
+print(summary.round(1).map("{:,.1f}".format).to_markdown())
+```
+
+Everything is heavily skewed. The median model has 2.2 million all-time downloads and 58 likes. The top model, `sentence-transformers/all-MiniLM-L6-v2`, has 4.2 billion downloads on its own (6.6% of all downloads in the dataset). The top 10 models take 28%. So every comparison below uses medians and log scales.
+
+The most common tasks are text-generation (577 models), image-text-to-text (382), and token-classification (354). That last one is mostly one org: OpenMed uploaded 237 medical NER models on a single day in July 2025, and 315 of the top 3,000 models are theirs.
+
+## What I found
+
+### Downloads and likes are different things
+
+The correlation between log likes and log downloads is only 0.42. Grouping by task makes the split obvious.
+
+```{python}
+#| fig-cap: "Median all-time downloads and median likes by task, for tasks with at least 30 models."
+#| fig-alt: "Two horizontal bar charts. Left, median downloads: fill-mask is highest at about 19 million, then sentence-similarity at 8.5 million. Right, median likes: image-to-image and text-to-image are highest, token-classification is near zero."
+by_task = models.groupby("task").agg(n=("model_id", "size"), median_downloads=("downloads_all_time", "median"), median_likes=("likes", "median"))
+by_task["median_downloads"] = by_task["median_downloads"] / 1e6
+by_task = by_task[by_task["n"] >= 30]
+fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+by_task.sort_values("median_downloads").plot.barh(y="median_downloads", ax=axes[0], color=BLUE, legend=False, width=0.6)
+axes[0].set_title("Median all-time downloads (millions)")
+axes[0].set_ylabel("")
+by_task.sort_values("median_likes").plot.barh(y="median_likes", ax=axes[1], color=ORANGE, legend=False, width=0.6)
+axes[1].set_title("Median likes")
+axes[1].set_ylabel("")
+plt.tight_layout()
+plt.show()
+```
+
+The most downloaded task is `fill-mask` (median 18.6 million), which is BERT and its cousins. Those are old, small, and get pulled into a million pipelines. But nobody likes them. The most liked tasks are `image-to-image` (median 405) and `text-to-image` (210), the stuff people actually play with.
+
+The extremes make the point even better. The models with the fewest likes per download are things like `vllm-project/tiny-random-LlamaForCausalLM` (2 likes, 26 million downloads). Those are tiny test models that CI pipelines download over and over. Downloads measure automation as much as humans.
+
+### Bigger models get liked, not downloaded
+
+```{python}
+#| fig-cap: "Parameters vs all-time downloads for the 1,832 models with a parameter count, both axes log. Point size is likes."
+#| fig-alt: "Scatter plot. Downloads do not rise with parameter count, the cloud is flat. The largest points, the most liked models, are over 10 billion parameters but sit in the middle of the download range."
+has_size = models[models["num_parameters"] > 0]
+fig, ax = plt.subplots(figsize=(8, 5.5))
+ax.scatter(has_size["num_parameters"], has_size["downloads_all_time"], s=5 + has_size["likes"] / 40,
+           color=BLUE, alpha=0.35, edgecolors="white", linewidths=0.5)
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel("Parameters")
+ax.set_ylabel("All-time downloads")
+ax.set_title("Downloads are flat across model size")
+for _, row in has_size.nlargest(4, "likes").iterrows():
+    ax.annotate(row["model_id"].split("/")[-1], (row["num_parameters"], row["downloads_all_time"]),
+                fontsize=8, color=GRAY, xytext=(5, 5), textcoords="offset points")
+plt.show()
+```
+
+Correlation between log parameters and log downloads is slightly negative (-0.11). Median downloads are about the same in every size bucket (2.3 to 3.8 million), and the smallest bucket is actually the highest. Likes are a different story: the median goes from 12 likes for models under 100M parameters to 162 for models over 10B, with a correlation of 0.43. People like the big flagship models. They run the small ones.
+
+### Library and license mostly don't matter, except as a proxy for who made it
+
+`transformers` is 55% of the dataset. `diffusers` models have the most median likes (265) because they are image models. On license, 55% are apache-2.0 and 14% MIT, and apache-2.0 models have the lowest median likes (46). The licenses with the most likes are `other` and `gemma`, which just means a big lab wrote its own license. Same with gated models: only 89 of them, but a median of 1,137 likes versus 54. Gating is something Meta and Google do, so it is really tracking the lab.
+
+### Newer models are generation models
+
+```{python}
+#| fig-cap: "Models created per year among the top 3,000, five most common tasks. Models with the placeholder 2022-03-02 date are left out, and 2026 only runs through November 4."
+#| fig-alt: "Grouped bar chart from 2022 to 2026. text-generation and image-text-to-text grow every year and dominate 2025 and 2026. token-classification spikes in 2025 from the OpenMed upload."
+top_tasks = models["task"].value_counts().head(5).index
+by_year = models[models["task"].isin(top_tasks)].groupby(["created_year", "task"]).size().unstack("task")[top_tasks]
+ax = by_year.plot.bar(figsize=(9, 5), color=[BLUE, ORANGE, "#1baf7a", "#eda100", "#e87ba4"], width=0.8, edgecolor="white")
+ax.set_xlabel("Year created")
+ax.set_ylabel("Models")
+ax.set_title("New models in the top 3,000 are mostly text and image-text generation")
+ax.set_xticklabels([int(y) for y in by_year.index], rotation=0)
+ax.legend(title="", frameon=False)
+plt.show()
+```
+
+Almost a third of the top 3,000 (978) were created in 2026, and they are overwhelmingly `text-generation` and `image-text-to-text`. The older tasks (fill-mask, sentence-similarity) are still downloaded a ton but almost nothing new in those categories breaks into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. A quarter of models were on the Hub before their paper was.
+
+## Caveats
+
+- Top 3,000 by 30-day downloads is a narrow slice of a Hub with millions of models. Everything here is about the winners.
+- Downloads count CI runs and automated pipelines, not just people.
+- 11% of creation dates are missing and 39% of parameter counts are missing, and the missingness is not random (older models and non-safetensors formats).
+- Downloads and likes change daily. A rerun will give you different numbers.
+
+## Try it yourself
+
+Everything is in the [repo](https://github.com/will-westover/hf-model-popularity): three scripts, the raw API output, the processed CSV, and a longer EDA notebook. `uv sync` and run the scripts in order. If you want to go further, the same API works for [datasets](https://huggingface.co/api/datasets) and [Spaces](https://huggingface.co/api/spaces), and the `huggingface_hub` Python package wraps all of it if you would rather not deal with the pagination yourself.
+
+### Links
+
+- [Hugging Face Hub API docs](https://huggingface.co/docs/hub/api)
+- [Hub rate limits](https://huggingface.co/docs/hub/rate-limits)
+- [arXiv API user manual](https://info.arxiv.org/help/api/user-manual.html)
+- [How the Hub counts downloads](https://huggingface.co/docs/hub/models-download-stats)
