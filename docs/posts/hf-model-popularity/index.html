@@ -8,9 +8,9 @@
 
 <meta name="author" content="Will Westover">
 <meta name="dcterms.date" content="2026-11-04">
-<meta name="description" content="Two free APIs, three scripts, and a dataset on which models people actually use.">
+<meta name="description" content="Two free APIs, three scripts, and a dataset of which models people actually use.">
 
-<title>What Makes a Hugging Face Model Popular? Curating a Dataset of the 3,000 Most Downloaded Models – Will Westover</title>
+<title>What Makes a Hugging Face Model Popular? Building a Dataset of the 3,000 Most Downloaded Models – Will Westover</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -171,10 +171,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-dataset" id="toc-the-dataset" class="nav-link" data-scroll-target="#the-dataset">The dataset</a></li>
   <li><a href="#what-i-found" id="toc-what-i-found" class="nav-link" data-scroll-target="#what-i-found">What I found</a>
   <ul class="collapse">
-  <li><a href="#downloads-and-likes-are-different-things" id="toc-downloads-and-likes-are-different-things" class="nav-link" data-scroll-target="#downloads-and-likes-are-different-things">Downloads and likes are different things</a></li>
-  <li><a href="#bigger-models-get-liked-not-downloaded" id="toc-bigger-models-get-liked-not-downloaded" class="nav-link" data-scroll-target="#bigger-models-get-liked-not-downloaded">Bigger models get liked, not downloaded</a></li>
-  <li><a href="#library-and-license-mostly-dont-matter-except-as-a-proxy-for-who-made-it" id="toc-library-and-license-mostly-dont-matter-except-as-a-proxy-for-who-made-it" class="nav-link" data-scroll-target="#library-and-license-mostly-dont-matter-except-as-a-proxy-for-who-made-it">Library and license mostly don’t matter, except as a proxy for who made it</a></li>
-  <li><a href="#newer-models-are-generation-models" id="toc-newer-models-are-generation-models" class="nav-link" data-scroll-target="#newer-models-are-generation-models">Newer models are generation models</a></li>
+  <li><a href="#downloads-and-likes-are-measuring-different-things" id="toc-downloads-and-likes-are-measuring-different-things" class="nav-link" data-scroll-target="#downloads-and-likes-are-measuring-different-things">Downloads and likes are measuring different things</a></li>
+  <li><a href="#bigger-models-get-more-likes-but-not-more-downloads" id="toc-bigger-models-get-more-likes-but-not-more-downloads" class="nav-link" data-scroll-target="#bigger-models-get-more-likes-but-not-more-downloads">Bigger models get more likes but not more downloads</a></li>
+  <li><a href="#library-and-license-mostly-tell-you-who-made-the-model" id="toc-library-and-license-mostly-tell-you-who-made-the-model" class="nav-link" data-scroll-target="#library-and-license-mostly-tell-you-who-made-the-model">Library and license mostly tell you who made the model</a></li>
+  <li><a href="#the-newer-models-are-generation-models" id="toc-the-newer-models-are-generation-models" class="nav-link" data-scroll-target="#the-newer-models-are-generation-models">The newer models are generation models</a></li>
   </ul></li>
   <li><a href="#caveats" id="toc-caveats" class="nav-link" data-scroll-target="#caveats">Caveats</a></li>
   <li><a href="#try-it-yourself" id="toc-try-it-yourself" class="nav-link" data-scroll-target="#try-it-yourself">Try it yourself</a>
@@ -189,7 +189,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">What Makes a Hugging Face Model Popular? Curating a Dataset of the 3,000 Most Downloaded Models</h1>
+<h1 class="title">What Makes a Hugging Face Model Popular? Building a Dataset of the 3,000 Most Downloaded Models</h1>
   <div class="quarto-categories">
     <div class="quarto-category">data-curation</div>
     <div class="quarto-category">apis</div>
@@ -199,7 +199,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Two free APIs, three scripts, and a dataset on which models people actually use.
+    Two free APIs, three scripts, and a dataset of which models people actually use.
   </div>
 </div>
 
@@ -230,27 +230,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="why-i-did-this" class="level2">
 <h2 class="anchored" data-anchor-id="why-i-did-this">Why I did this</h2>
-<p>I spend a lot of time on <a href="https://huggingface.co/models">Hugging Face</a>. It is where almost every open model gets shared, and every model page shows a download count and a like count. Those two numbers are a pretty honest signal of what people actually use, not just what gets hyped on Twitter. So I wanted a dataset of the most downloaded models and enough features to ask a simple question:</p>
+<p>I’m really into machine learning, and <a href="https://huggingface.co/models">Hugging Face</a> is basically where everyone shares open models. Every model page shows a download count and a like count, and I think those two numbers are a pretty honest signal of what people actually use, not just what gets hype. So I wanted a dataset of the most downloaded models with enough features to ask a simple question:</p>
 <p><strong>Does a model’s task, library, license, or size have anything to do with how popular it is?</strong></p>
-<p>And a second one that came out of the first: are downloads and likes even measuring the same thing?</p>
+<p>A second question came up once I had the data: are downloads and likes even measuring the same thing?</p>
 <p>The code and the dataset are in the <a href="https://github.com/will-westover/hf-model-popularity">hf-model-popularity repo</a>.</p>
 </section>
 <section id="is-this-allowed" class="level2">
 <h2 class="anchored" data-anchor-id="is-this-allowed">Is this allowed?</h2>
 <p>Before writing any code I checked three things:</p>
 <ul>
-<li><a href="https://huggingface.co/robots.txt">robots.txt</a> is one line: <code>Allow: /</code>.</li>
-<li>The <a href="https://huggingface.co/docs/hub/api">Hub API docs</a> describe the endpoint I used as public, no token required. The <a href="https://huggingface.co/docs/hub/rate-limits">rate limit page</a> says 500 requests per 5 minutes, and the response headers tell you how many you have left.</li>
+<li><a href="https://huggingface.co/robots.txt">robots.txt</a> is one line, <code>Allow: /</code>.</li>
+<li>The <a href="https://huggingface.co/docs/hub/api">Hub API docs</a> say the endpoint I used is public and doesn’t need a token. The <a href="https://huggingface.co/docs/hub/rate-limits">rate limit page</a> says 500 requests per 5 minutes, and the response headers tell you how many you have left.</li>
 <li>The <a href="https://info.arxiv.org/help/api/index.html">arXiv API</a> is free and asks for about 3 seconds between requests.</li>
 </ul>
-<p>The data is metadata about models, not about people. The only person-like field is the author, which is a public username or org name. No model weights, no user data. So I felt fine publishing the CSV. I also sent a User-Agent that names the project and links to the repo, so anyone on their end can tell what the traffic is.</p>
+<p>The data is about models, not people. The only person-like field is the author, which is a public username or org name. There are no model weights and no user data, so I felt fine putting the CSV in the repo. I also sent a User-Agent that names the project and links to the repo so anyone on their end can tell what the traffic is.</p>
 </section>
 <section id="how-to-get-the-data" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-get-the-data">How to get the data</h2>
-<p>Three scripts, no API key.</p>
+<p>It’s three scripts, and you don’t need an API key for either source.</p>
 <section id="one-request-per-1000-models" class="level3">
 <h3 class="anchored" data-anchor-id="one-request-per-1000-models">1. One request per 1,000 models</h3>
-<p>My plan was to list the top models, then hit the detail endpoint 3,000 times for license and parameter count. Turns out you don’t need to. The list endpoint has an <code>expand[]</code> parameter that returns the extra fields in the same call, and <code>limit</code> goes up to 1,000. So the whole thing is 3 requests.</p>
+<p>My original plan was to list the top models and then hit the detail endpoint 3,000 times to get the license and parameter count. It turns out you don’t need to. The list endpoint has an <code>expand[]</code> parameter that adds those fields to the same call, and <code>limit</code> goes up to 1,000, so the whole thing is 3 requests.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> {</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sort"</span>: <span class="st">"downloads"</span>, <span class="st">"direction"</span>: <span class="op">-</span><span class="dv">1</span>, <span class="st">"limit"</span>: <span class="dv">1000</span>,</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"expand[]"</span>: [<span class="st">"author"</span>, <span class="st">"pipeline_tag"</span>, <span class="st">"library_name"</span>, <span class="st">"tags"</span>, <span class="st">"cardData"</span>,</span>
@@ -259,27 +259,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> session.get(<span class="st">"https://huggingface.co/api/models"</span>, params<span class="op">=</span>params)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>next_url <span class="op">=</span> response.links[<span class="st">"next"</span>][<span class="st">"url"</span>]   <span class="co"># pagination comes from the Link header</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The two things that tripped me up: pagination is a <code>Link</code> header, not a field in the JSON (<code>requests</code> parses it for you as <code>response.links</code>), and the license is not its own field. It lives in <code>tags</code> as <code>license:apache-2.0</code>, so you pull it out of the tag list.</p>
-<p>I save the raw JSON untouched, plus one flattened row per model. That way if I decide I want a different field later I don’t have to hit the API again.</p>
+<p>Two things tripped me up. Pagination is a <code>Link</code> header instead of a field in the JSON (<code>requests</code> parses it for you as <code>response.links</code>), and the license isn’t its own field. It’s in <code>tags</code> as <code>license:apache-2.0</code>, so you pull it out of the tag list.</p>
+<p>I save the raw JSON exactly as it came back, plus one flattened row per model. That way if I want a different field later I don’t have to hit the API again.</p>
 </section>
 <section id="look-up-the-papers" class="level3">
 <h3 class="anchored" data-anchor-id="look-up-the-papers">2. Look up the papers</h3>
-<p>About half of the models have <code>arxiv:1908.10084</code> style tags. The arXiv API takes a comma-separated <code>id_list</code>, so I sent 100 IDs per request (8 requests total, 3 seconds apart) and parsed the Atom XML with the standard library. That gives each paper’s date and primary category (cs.CL, cs.CV, and so on).</p>
+<p>About half of the models have tags like <code>arxiv:1908.10084</code>. The arXiv API takes a comma-separated <code>id_list</code>, so I sent 100 IDs per request (8 requests total, 3 seconds apart) and parsed the Atom XML with the standard library. That gives each paper’s date and primary category (cs.CL, cs.CV, and so on).</p>
 </section>
 <section id="clean" class="level3">
 <h3 class="anchored" data-anchor-id="clean">3. Clean</h3>
-<p>The cleaning script joins the two raw files and makes the decisions I didn’t want to make at collection time:</p>
+<p>The cleaning script joins the two raw files and makes the decisions I didn’t want to make while collecting:</p>
 <ul>
-<li>329 models (11%) show a creation date of exactly 2022-03-02. That is the day the Hub migrated, not a real date, so I blank it and keep a <code>created_at_known</code> flag.</li>
-<li>Parameter counts come from safetensors metadata, which 1,168 models don’t have. Those stay missing rather than getting guessed.</li>
+<li>329 models (11%) have a creation date of exactly 2022-03-02. That’s the day the Hub migrated, not a real date, so I blank it out and keep a <code>created_at_known</code> flag.</li>
+<li>Parameter counts come from safetensors metadata, and 1,168 models don’t have it. I left those missing instead of guessing.</li>
 <li>Each model gets its earliest paper’s date and category, a size bucket, and likes per million downloads.</li>
 </ul>
 </section>
 </section>
 <section id="the-dataset" class="level2">
 <h2 class="anchored" data-anchor-id="the-dataset">The dataset</h2>
-<p>3,000 rows, 28 columns, collected November 4, 2026. 789 different authors, 47 tasks, 99 libraries, 29 licenses.</p>
-<div id="5f1811d4" class="cell" data-execution_count="1">
+<p>3,000 rows and 28 columns, collected November 4, 2026. There are 789 different authors, 47 tasks, 99 libraries, and 29 licenses.</p>
+<div id="daee9af9" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -352,15 +352,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
-<p>Everything is heavily skewed. The median model has 2.2 million all-time downloads and 58 likes. The top model, <code>sentence-transformers/all-MiniLM-L6-v2</code>, has 4.2 billion downloads on its own (6.6% of all downloads in the dataset). The top 10 models take 28%. So every comparison below uses medians and log scales.</p>
-<p>The most common tasks are text-generation (577 models), image-text-to-text (382), and token-classification (354). That last one is mostly one org: OpenMed uploaded 237 medical NER models on a single day in July 2025, and 315 of the top 3,000 models are theirs.</p>
+<p>Everything is really skewed. The median model has about 2.2 million all-time downloads and 58 likes, but the top model (<code>sentence-transformers/all-MiniLM-L6-v2</code>) has 4.2 billion downloads on its own, which is 6.6% of all the downloads in the dataset. The top 10 models have 28%. So everything below uses medians and log scales.</p>
+<p>The most common tasks are text-generation (577 models), image-text-to-text (382), and token-classification (354). That last one is mostly one org. OpenMed uploaded 237 medical NER models on a single day in July 2025, and 315 of the top 3,000 models are theirs.</p>
 </section>
 <section id="what-i-found" class="level2">
 <h2 class="anchored" data-anchor-id="what-i-found">What I found</h2>
-<section id="downloads-and-likes-are-different-things" class="level3">
-<h3 class="anchored" data-anchor-id="downloads-and-likes-are-different-things">Downloads and likes are different things</h3>
-<p>The correlation between log likes and log downloads is only 0.42. Grouping by task makes the split obvious.</p>
-<div id="7fd73cee" class="cell" data-execution_count="3">
+<section id="downloads-and-likes-are-measuring-different-things" class="level3">
+<h3 class="anchored" data-anchor-id="downloads-and-likes-are-measuring-different-things">Downloads and likes are measuring different things</h3>
+<p>The correlation between log likes and log downloads is only 0.42. Grouping by task shows why.</p>
+<div id="ebe51511" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>by_task <span class="op">=</span> models.groupby(<span class="st">"task"</span>).agg(n<span class="op">=</span>(<span class="st">"model_id"</span>, <span class="st">"size"</span>), median_downloads<span class="op">=</span>(<span class="st">"downloads_all_time"</span>, <span class="st">"median"</span>), median_likes<span class="op">=</span>(<span class="st">"likes"</span>, <span class="st">"median"</span>))</span>
@@ -385,12 +385,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The most downloaded task is <code>fill-mask</code> (median 18.6 million), which is BERT and its cousins. Those are old, small, and get pulled into a million pipelines. But nobody likes them. The most liked tasks are <code>image-to-image</code> (median 405) and <code>text-to-image</code> (210), the stuff people actually play with.</p>
-<p>The extremes make the point even better. The models with the fewest likes per download are things like <code>vllm-project/tiny-random-LlamaForCausalLM</code> (2 likes, 26 million downloads). Those are tiny test models that CI pipelines download over and over. Downloads measure automation as much as humans.</p>
+<p>The most downloaded task is <code>fill-mask</code> (median 18.6 million), which is BERT and models like it. They’re old and small and get pulled into a ton of pipelines, but hardly anyone likes them. The most liked tasks are <code>image-to-image</code> (median 405) and <code>text-to-image</code> (210), which are the ones people actually play with.</p>
+<p>The extremes make it even more obvious. The models with the fewest likes per download are things like <code>vllm-project/tiny-random-LlamaForCausalLM</code> (2 likes, 26 million downloads). Those are tiny test models that CI pipelines download over and over, so a lot of the download count is automation and not people.</p>
 </section>
-<section id="bigger-models-get-liked-not-downloaded" class="level3">
-<h3 class="anchored" data-anchor-id="bigger-models-get-liked-not-downloaded">Bigger models get liked, not downloaded</h3>
-<div id="ba51948f" class="cell" data-execution_count="4">
+<section id="bigger-models-get-more-likes-but-not-more-downloads" class="level3">
+<h3 class="anchored" data-anchor-id="bigger-models-get-more-likes-but-not-more-downloads">Bigger models get more likes but not more downloads</h3>
+<div id="1f8fc985" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>has_size <span class="op">=</span> models[models[<span class="st">"num_parameters"</span>] <span class="op">&gt;</span> <span class="dv">0</span>]</span>
@@ -416,15 +416,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Correlation between log parameters and log downloads is slightly negative (-0.11). Median downloads are about the same in every size bucket (2.3 to 3.8 million), and the smallest bucket is actually the highest. Likes are a different story: the median goes from 12 likes for models under 100M parameters to 162 for models over 10B, with a correlation of 0.43. People like the big flagship models. They run the small ones.</p>
+<p>The correlation between log parameters and log downloads is actually slightly negative (-0.11). Median downloads are about the same in every size bucket (2.3 to 3.8 million), and the smallest bucket is the highest. Likes are different. The median goes from 12 likes for models under 100M parameters to 162 for models over 10B, with a correlation of 0.43. So people like the big flagship models but run the small ones.</p>
 </section>
-<section id="library-and-license-mostly-dont-matter-except-as-a-proxy-for-who-made-it" class="level3">
-<h3 class="anchored" data-anchor-id="library-and-license-mostly-dont-matter-except-as-a-proxy-for-who-made-it">Library and license mostly don’t matter, except as a proxy for who made it</h3>
-<p><code>transformers</code> is 55% of the dataset. <code>diffusers</code> models have the most median likes (265) because they are image models. On license, 55% are apache-2.0 and 14% MIT, and apache-2.0 models have the lowest median likes (46). The licenses with the most likes are <code>other</code> and <code>gemma</code>, which just means a big lab wrote its own license. Same with gated models: only 89 of them, but a median of 1,137 likes versus 54. Gating is something Meta and Google do, so it is really tracking the lab.</p>
+<section id="library-and-license-mostly-tell-you-who-made-the-model" class="level3">
+<h3 class="anchored" data-anchor-id="library-and-license-mostly-tell-you-who-made-the-model">Library and license mostly tell you who made the model</h3>
+<p><code>transformers</code> is 55% of the dataset. <code>diffusers</code> models have the highest median likes (265) since they’re image models. For license, 55% are apache-2.0 and 14% are MIT, and apache-2.0 models have the lowest median likes (46). The licenses with the most likes are <code>other</code> and <code>gemma</code>, which really just means a big lab wrote its own license. Gated models are the same story. There are only 89 of them, but they have a median of 1,137 likes compared to 54 for everything else. Gating is something Meta and Google do, so it’s tracking the lab more than anything.</p>
 </section>
-<section id="newer-models-are-generation-models" class="level3">
-<h3 class="anchored" data-anchor-id="newer-models-are-generation-models">Newer models are generation models</h3>
-<div id="c094c807" class="cell" data-execution_count="5">
+<section id="the-newer-models-are-generation-models" class="level3">
+<h3 class="anchored" data-anchor-id="the-newer-models-are-generation-models">The newer models are generation models</h3>
+<div id="6b8d5610" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>top_tasks <span class="op">=</span> models[<span class="st">"task"</span>].value_counts().head(<span class="dv">5</span>).index</span>
@@ -446,21 +446,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Almost a third of the top 3,000 (978) were created in 2026, and they are overwhelmingly <code>text-generation</code> and <code>image-text-to-text</code>. The older tasks (fill-mask, sentence-similarity) are still downloaded a ton but almost nothing new in those categories breaks into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. A quarter of models were on the Hub before their paper was.</p>
+<p>Almost a third of the top 3,000 (978) were created in 2026, and they’re mostly <code>text-generation</code> and <code>image-text-to-text</code>. The older tasks like fill-mask and sentence-similarity still get downloaded a ton, but almost nothing new in those categories makes it into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. About a quarter of the models were on the Hub before their paper was.</p>
 </section>
 </section>
 <section id="caveats" class="level2">
 <h2 class="anchored" data-anchor-id="caveats">Caveats</h2>
 <ul>
-<li>Top 3,000 by 30-day downloads is a narrow slice of a Hub with millions of models. Everything here is about the winners.</li>
+<li>The top 3,000 by 30-day downloads is a small slice of a Hub with millions of models, so everything here is about the winners.</li>
 <li>Downloads count CI runs and automated pipelines, not just people.</li>
-<li>11% of creation dates are missing and 39% of parameter counts are missing, and the missingness is not random (older models and non-safetensors formats).</li>
-<li>Downloads and likes change daily. A rerun will give you different numbers.</li>
+<li>11% of the creation dates and 39% of the parameter counts are missing, and it isn’t random (older models and non-safetensors formats).</li>
+<li>Downloads and likes change every day, so a rerun will give you different numbers.</li>
 </ul>
 </section>
 <section id="try-it-yourself" class="level2">
 <h2 class="anchored" data-anchor-id="try-it-yourself">Try it yourself</h2>
-<p>Everything is in the <a href="https://github.com/will-westover/hf-model-popularity">repo</a>: three scripts, the raw API output, the processed CSV, and a longer EDA notebook. <code>uv sync</code> and run the scripts in order. If you want to go further, the same API works for <a href="https://huggingface.co/api/datasets">datasets</a> and <a href="https://huggingface.co/api/spaces">Spaces</a>, and the <code>huggingface_hub</code> Python package wraps all of it if you would rather not deal with the pagination yourself.</p>
+<p>Everything is in the <a href="https://github.com/will-westover/hf-model-popularity">repo</a>: the three scripts, the raw API output, the processed CSV, and a longer EDA. Run <code>uv sync</code> and then the scripts in order. If you want to go further, the same API works for <a href="https://huggingface.co/api/datasets">datasets</a> and <a href="https://huggingface.co/api/spaces">Spaces</a>, and the <code>huggingface_hub</code> package wraps all of it if you’d rather not deal with the pagination yourself.</p>
 <section id="links" class="level3">
 <h3 class="anchored" data-anchor-id="links">Links</h3>
 <ul>

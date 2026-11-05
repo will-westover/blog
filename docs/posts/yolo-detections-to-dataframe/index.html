@@ -271,12 +271,12 @@ window.Quarto = {
 <p>First, install the libraries (tabulate lets pandas print Markdown tables):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install ultralytics pandas matplotlib tabulate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>We load the model with the <code>YOLO</code> class from ultralytics. We’ll use YOLOv8n, the smallest and fastest of the five sizes (n, s, m, l, x). It’s also the least accurate, but for a single frame that trade-off is fine. The weights file downloads automatically the first time you run the code.</p>
-<div id="a0397e8b" class="cell" data-execution_count="1">
+<div id="37cc282c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> ultralytics <span class="im">import</span> YOLO</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> YOLO(<span class="st">"yolov8n.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Then we run it on our frame. <code>model("frame.jpg")</code> is shorthand for <code>model.predict("frame.jpg")</code>. It returns a list with one Results object per image, and since we passed in one image, we take <code>[0]</code>.</p>
-<div id="7268d123" class="cell" data-execution_count="2">
+<div id="d1f6bdd5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> model(<span class="st">"frame.jpg"</span>)[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Here is what the model sees in our frame, plus four photos from other games. Use the arrows to click through them. The boxes around the objects are the detections from the model.</p>
@@ -308,7 +308,7 @@ window.Quarto = {
 <li><code>result.names</code>: a dictionary that maps class IDs to names, such as <code>{0: "person", 32: "sports ball"}</code></li>
 </ul>
 <p>These line up by position, so row <em>i</em> of each one describes the same detection. That makes it easy to put them side by side in a DataFrame with one row per detection: the box corners (<code>x1</code>, <code>y1</code> top-left and <code>x2</code>, <code>y2</code> bottom-right), the <code>class</code> name, the <code>confidence</code>, and the box center (<code>x_center</code>, <code>y_center</code>).</p>
-<div id="c1abd200" class="cell" data-execution_count="4">
+<div id="7b30f0a3" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(result.boxes.xyxy, columns<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"y1"</span>, <span class="st">"x2"</span>, <span class="st">"y2"</span>])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"class"</span>] <span class="op">=</span> [result.names[<span class="bu">int</span>(c)] <span class="cf">for</span> c <span class="kw">in</span> result.boxes.cls]</span>
@@ -402,7 +402,7 @@ x_c = \frac{x_1 + x_2}{2}, \qquad y_c = \frac{y_1 + y_2}{2}
 <section id="step-3-filter-and-plot" class="level2">
 <h2 class="anchored" data-anchor-id="step-3-filter-and-plot">Step 3: Filter and plot</h2>
 <p>Now we filter the DataFrame to keep only “person” and “sports ball” detections with a confidence score above 0.5. We save the result as <code>players</code> so the full <code>df</code> stays around.</p>
-<div id="c587d6f8" class="cell" data-execution_count="6">
+<div id="320b19dc" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>players <span class="op">=</span> df[df[<span class="st">"class"</span>].isin([<span class="st">"person"</span>, <span class="st">"sports ball"</span>]) <span class="op">&amp;</span> (df[<span class="st">"confidence"</span>] <span class="op">&gt;</span> <span class="fl">0.5</span>)]</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>players[<span class="st">"class"</span>].value_counts()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -414,7 +414,7 @@ Name: count, dtype: int64</code></pre>
 </div>
 <p>Why 0.5? YOLO’s default cutoff is 0.25, which keeps all 14 people. Raising it to 0.5 drops 7 of them: four small figures in the background and three partial or duplicate boxes. It isn’t perfect, though. Two spectators by the fence score above 0.5, and the player in white partly hidden behind the tackle scores only 0.40, so he gets cut. A cutoff is a trade-off, so check it against the image.</p>
 <p>Finally, we plot the box centers on top of the frame:</p>
-<div id="a735bed8" class="cell" data-execution_count="7">
+<div id="8ec217cf" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">5.5</span>))</span>
