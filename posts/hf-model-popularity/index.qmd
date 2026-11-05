@@ -25,14 +25,14 @@ The code and the dataset are in the [hf-model-popularity repo](https://github.co
 Before writing any code I checked three things:
 
 - [robots.txt](https://huggingface.co/robots.txt) is one line, `Allow: /`.
-- The [Hub API docs](https://huggingface.co/docs/hub/api) say the endpoint I used is public and doesn't need a token. The [rate limit page](https://huggingface.co/docs/hub/rate-limits) says 500 requests per 5 minutes, and the response headers tell you how many you have left.
+- The [Hub API docs](https://huggingface.co/docs/hub/api) say the endpoint is public. The [rate limit page](https://huggingface.co/docs/hub/rate-limits) says 500 requests per 5 minutes, and the response headers tell you how many you have left.
 - The [arXiv API](https://info.arxiv.org/help/api/index.html) is free and asks for about 3 seconds between requests.
 
-The data is about models, not people. The only person-like field is the author, which is a public username or org name. There are no model weights and no user data, so I felt fine putting the CSV in the repo. I also sent a User-Agent that names the project and links to the repo so anyone on their end can tell what the traffic is.
+The data is about models, not people. The only person-like field is the author, which is a public username or org name. There are no model weights and no user data, so the CSV is in the repo. I also sent a User-Agent that names the project and links to the repo so anyone on their end can tell what the traffic is.
 
 ## How to get the data
 
-It's three scripts, and you don't need an API key for either source.
+It's three scripts.
 
 ### 1. One request per 1,000 models
 
@@ -51,7 +51,7 @@ next_url = response.links["next"]["url"]   # pagination comes from the Link head
 
 Two things tripped me up. Pagination is a `Link` header instead of a field in the JSON (`requests` parses it for you as `response.links`), and the license isn't its own field. It's in `tags` as `license:apache-2.0`, so you pull it out of the tag list.
 
-I save the raw JSON exactly as it came back, plus one flattened row per model. That way if I want a different field later I don't have to hit the API again.
+I save the raw JSON plus one flattened row per model. That way if I want a different field later I don't have to hit the API again.
 
 ### 2. Look up the papers
 

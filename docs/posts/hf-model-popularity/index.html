@@ -240,14 +240,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Before writing any code I checked three things:</p>
 <ul>
 <li><a href="https://huggingface.co/robots.txt">robots.txt</a> is one line, <code>Allow: /</code>.</li>
-<li>The <a href="https://huggingface.co/docs/hub/api">Hub API docs</a> say the endpoint I used is public and doesn’t need a token. The <a href="https://huggingface.co/docs/hub/rate-limits">rate limit page</a> says 500 requests per 5 minutes, and the response headers tell you how many you have left.</li>
+<li>The <a href="https://huggingface.co/docs/hub/api">Hub API docs</a> say the endpoint is public. The <a href="https://huggingface.co/docs/hub/rate-limits">rate limit page</a> says 500 requests per 5 minutes, and the response headers tell you how many you have left.</li>
 <li>The <a href="https://info.arxiv.org/help/api/index.html">arXiv API</a> is free and asks for about 3 seconds between requests.</li>
 </ul>
-<p>The data is about models, not people. The only person-like field is the author, which is a public username or org name. There are no model weights and no user data, so I felt fine putting the CSV in the repo. I also sent a User-Agent that names the project and links to the repo so anyone on their end can tell what the traffic is.</p>
+<p>The data is about models, not people. The only person-like field is the author, which is a public username or org name. There are no model weights and no user data, so the CSV is in the repo. I also sent a User-Agent that names the project and links to the repo so anyone on their end can tell what the traffic is.</p>
 </section>
 <section id="how-to-get-the-data" class="level2">
 <h2 class="anchored" data-anchor-id="how-to-get-the-data">How to get the data</h2>
-<p>It’s three scripts, and you don’t need an API key for either source.</p>
+<p>It’s three scripts.</p>
 <section id="one-request-per-1000-models" class="level3">
 <h3 class="anchored" data-anchor-id="one-request-per-1000-models">1. One request per 1,000 models</h3>
 <p>My original plan was to list the top models and then hit the detail endpoint 3,000 times to get the license and parameter count. It turns out you don’t need to. The list endpoint has an <code>expand[]</code> parameter that adds those fields to the same call, and <code>limit</code> goes up to 1,000, so the whole thing is 3 requests.</p>
@@ -260,7 +260,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> session.get(<span class="st">"https://huggingface.co/api/models"</span>, params<span class="op">=</span>params)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>next_url <span class="op">=</span> response.links[<span class="st">"next"</span>][<span class="st">"url"</span>]   <span class="co"># pagination comes from the Link header</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Two things tripped me up. Pagination is a <code>Link</code> header instead of a field in the JSON (<code>requests</code> parses it for you as <code>response.links</code>), and the license isn’t its own field. It’s in <code>tags</code> as <code>license:apache-2.0</code>, so you pull it out of the tag list.</p>
-<p>I save the raw JSON exactly as it came back, plus one flattened row per model. That way if I want a different field later I don’t have to hit the API again.</p>
+<p>I save the raw JSON plus one flattened row per model. That way if I want a different field later I don’t have to hit the API again.</p>
 </section>
 <section id="look-up-the-papers" class="level3">
 <h3 class="anchored" data-anchor-id="look-up-the-papers">2. Look up the papers</h3>
@@ -279,7 +279,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="the-dataset" class="level2">
 <h2 class="anchored" data-anchor-id="the-dataset">The dataset</h2>
 <p>3,000 rows and 28 columns, collected November 4, 2026. There are 789 different authors, 47 tasks, 99 libraries, and 29 licenses.</p>
-<div id="daee9af9" class="cell" data-execution_count="1">
+<div id="fd179a22" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -360,7 +360,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="downloads-and-likes-are-measuring-different-things" class="level3">
 <h3 class="anchored" data-anchor-id="downloads-and-likes-are-measuring-different-things">Downloads and likes are measuring different things</h3>
 <p>The correlation between log likes and log downloads is only 0.42. Grouping by task shows why.</p>
-<div id="ebe51511" class="cell" data-execution_count="3">
+<div id="6f700c9d" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>by_task <span class="op">=</span> models.groupby(<span class="st">"task"</span>).agg(n<span class="op">=</span>(<span class="st">"model_id"</span>, <span class="st">"size"</span>), median_downloads<span class="op">=</span>(<span class="st">"downloads_all_time"</span>, <span class="st">"median"</span>), median_likes<span class="op">=</span>(<span class="st">"likes"</span>, <span class="st">"median"</span>))</span>
@@ -390,7 +390,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="bigger-models-get-more-likes-but-not-more-downloads" class="level3">
 <h3 class="anchored" data-anchor-id="bigger-models-get-more-likes-but-not-more-downloads">Bigger models get more likes but not more downloads</h3>
-<div id="1f8fc985" class="cell" data-execution_count="4">
+<div id="75668ff7" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>has_size <span class="op">=</span> models[models[<span class="st">"num_parameters"</span>] <span class="op">&gt;</span> <span class="dv">0</span>]</span>
@@ -424,7 +424,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="the-newer-models-are-generation-models" class="level3">
 <h3 class="anchored" data-anchor-id="the-newer-models-are-generation-models">The newer models are generation models</h3>
-<div id="6b8d5610" class="cell" data-execution_count="5">
+<div id="0cf9d595" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>top_tasks <span class="op">=</span> models[<span class="st">"task"</span>].value_counts().head(<span class="dv">5</span>).index</span>
