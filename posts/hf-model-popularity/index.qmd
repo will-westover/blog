@@ -113,14 +113,14 @@ plt.tight_layout()
 plt.show()
 ```
 
-The most downloaded task is `fill-mask` (median 18.6 million), which is BERT and models like it. They're old and small and get pulled into a ton of pipelines, but hardly anyone likes them. The most liked tasks are `image-to-image` (median 405) and `text-to-image` (210), which are the ones people actually play with.
+The most downloaded task is `fill-mask` (median 18.6 million), which is BERT and models like it. They're old and small and get pulled into a ton of pipelines, but hardly anyone likes them. The most liked tasks are `image-to-image` (median 405) and `text-to-image` (211), which are the ones people actually play with.
 
 The extremes make it even more obvious. The models with the fewest likes per download are things like `vllm-project/tiny-random-LlamaForCausalLM` (2 likes, 26 million downloads). Those are tiny test models that CI pipelines download over and over, so a lot of the download count is automation and not people.
 
 ### Bigger models get more likes but not more downloads
 
 ```{python}
-#| fig-cap: "Parameters vs all-time downloads for the 1,832 models with a parameter count, both axes log. Point size is likes."
+#| fig-cap: "Parameters vs all-time downloads for the 1,822 models with a parameter count, both axes log. Point size is likes."
 #| fig-alt: "Scatter plot. Downloads do not rise with parameter count, the cloud is flat. The largest points, the most liked models, are over 10 billion parameters but sit in the middle of the download range."
 has_size = models[models["num_parameters"] > 0]
 fig, ax = plt.subplots(figsize=(8, 5.5))
@@ -159,7 +159,7 @@ ax.legend(title="", frameon=False)
 plt.show()
 ```
 
-Almost a third of the top 3,000 (978) were created in 2026, and they're mostly `text-generation` and `image-text-to-text`. The older tasks like fill-mask and sentence-similarity still get downloaded a ton, but almost nothing new in those categories makes it into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. About a quarter of the models were on the Hub before their paper was.
+Almost a third of the top 3,000 (978) were created in 2026, and they're mostly `text-generation` and `image-text-to-text`. The older tasks like fill-mask and sentence-similarity still get downloaded a ton, but almost nothing new in those categories makes it into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. About 40% of the models were on the Hub before their paper was.
 
 ## Caveats
 

@@ -279,7 +279,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="the-dataset" class="level2">
 <h2 class="anchored" data-anchor-id="the-dataset">The dataset</h2>
 <p>3,000 rows and 28 columns, collected November 4, 2026. There are 789 different authors, 47 tasks, 99 libraries, and 29 licenses.</p>
-<div id="fd179a22" class="cell" data-execution_count="1">
+<div id="867d4b58" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -360,7 +360,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="downloads-and-likes-are-measuring-different-things" class="level3">
 <h3 class="anchored" data-anchor-id="downloads-and-likes-are-measuring-different-things">Downloads and likes are measuring different things</h3>
 <p>The correlation between log likes and log downloads is only 0.42. Grouping by task shows why.</p>
-<div id="6f700c9d" class="cell" data-execution_count="3">
+<div id="13a253bf" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>by_task <span class="op">=</span> models.groupby(<span class="st">"task"</span>).agg(n<span class="op">=</span>(<span class="st">"model_id"</span>, <span class="st">"size"</span>), median_downloads<span class="op">=</span>(<span class="st">"downloads_all_time"</span>, <span class="st">"median"</span>), median_likes<span class="op">=</span>(<span class="st">"likes"</span>, <span class="st">"median"</span>))</span>
@@ -385,12 +385,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>The most downloaded task is <code>fill-mask</code> (median 18.6 million), which is BERT and models like it. They’re old and small and get pulled into a ton of pipelines, but hardly anyone likes them. The most liked tasks are <code>image-to-image</code> (median 405) and <code>text-to-image</code> (210), which are the ones people actually play with.</p>
+<p>The most downloaded task is <code>fill-mask</code> (median 18.6 million), which is BERT and models like it. They’re old and small and get pulled into a ton of pipelines, but hardly anyone likes them. The most liked tasks are <code>image-to-image</code> (median 405) and <code>text-to-image</code> (211), which are the ones people actually play with.</p>
 <p>The extremes make it even more obvious. The models with the fewest likes per download are things like <code>vllm-project/tiny-random-LlamaForCausalLM</code> (2 likes, 26 million downloads). Those are tiny test models that CI pipelines download over and over, so a lot of the download count is automation and not people.</p>
 </section>
 <section id="bigger-models-get-more-likes-but-not-more-downloads" class="level3">
 <h3 class="anchored" data-anchor-id="bigger-models-get-more-likes-but-not-more-downloads">Bigger models get more likes but not more downloads</h3>
-<div id="75668ff7" class="cell" data-execution_count="4">
+<div id="578440cb" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>has_size <span class="op">=</span> models[models[<span class="st">"num_parameters"</span>] <span class="op">&gt;</span> <span class="dv">0</span>]</span>
@@ -411,7 +411,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="index_files/figure-html/cell-5-output-1.png" alt="Scatter plot. Downloads do not rise with parameter count, the cloud is flat. The largest points, the most liked models, are over 10 billion parameters but sit in the middle of the download range." width="686" height="490" class="figure-img"></p>
-<figcaption>Parameters vs all-time downloads for the 1,832 models with a parameter count, both axes log. Point size is likes.</figcaption>
+<figcaption>Parameters vs all-time downloads for the 1,822 models with a parameter count, both axes log. Point size is likes.</figcaption>
 </figure>
 </div>
 </div>
@@ -424,7 +424,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="the-newer-models-are-generation-models" class="level3">
 <h3 class="anchored" data-anchor-id="the-newer-models-are-generation-models">The newer models are generation models</h3>
-<div id="0cf9d595" class="cell" data-execution_count="5">
+<div id="b35d48ca" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>top_tasks <span class="op">=</span> models[<span class="st">"task"</span>].value_counts().head(<span class="dv">5</span>).index</span>
@@ -446,7 +446,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>Almost a third of the top 3,000 (978) were created in 2026, and they’re mostly <code>text-generation</code> and <code>image-text-to-text</code>. The older tasks like fill-mask and sentence-similarity still get downloaded a ton, but almost nothing new in those categories makes it into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. About a quarter of the models were on the Hub before their paper was.</p>
+<p>Almost a third of the top 3,000 (978) were created in 2026, and they’re mostly <code>text-generation</code> and <code>image-text-to-text</code>. The older tasks like fill-mask and sentence-similarity still get downloaded a ton, but almost nothing new in those categories makes it into the top 3,000. On the paper side, half the models link an arXiv paper, cs.CL papers outnumber cs.CV 903 to 329, and the median gap from paper to model is 76 days. About 40% of the models were on the Hub before their paper was.</p>
 </section>
 </section>
 <section id="caveats" class="level2">
