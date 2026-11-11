@@ -90,6 +90,8 @@ Everything is really skewed. The median model has about 2.2 million all-time dow
 
 The most common tasks are text-generation (577 models), image-text-to-text (382), and token-classification (354). That last one is mostly one org. OpenMed uploaded 237 medical NER models on a single day in July 2025, and 315 of the top 3,000 models are theirs.
 
+Since one org is 10.5% of the rows, I reran the main numbers without OpenMed. The median model goes from 58 likes to 76. The correlation between likes and downloads barely moves (0.42 to 0.41), and the size results below hold up (-0.11 to -0.19 for downloads, 0.43 to 0.37 for likes).
+
 ## What I found
 
 ### Downloads and likes are measuring different things
@@ -141,7 +143,7 @@ The correlation between log parameters and log downloads is actually slightly ne
 
 ### Library and license mostly tell you who made the model
 
-`transformers` is 55% of the dataset. `diffusers` models have the highest median likes (265) since they're image models. For license, 55% are apache-2.0 and 14% are MIT, and apache-2.0 models have the lowest median likes (46). The licenses with the most likes are `other` and `gemma`, which really just means a big lab wrote its own license. Gated models are the same story. There are only 89 of them, but they have a median of 1,137 likes compared to 54 for everything else. Gating is something Meta and Google do, so it's tracking the lab more than anything.
+`transformers` is 55% of the dataset. `diffusers` models have the highest median likes (265) since they're image models. For license, 55% are apache-2.0 and 14% are MIT. apache-2.0 models have the lowest median likes (46), but that's mostly OpenMed. All 315 of their models are apache-2.0 with a median of 0 likes, and without them the apache-2.0 median is 80.5, which is pretty close to MIT (98). The licenses with the most likes are `other` and `gemma`, which really just means a big lab wrote its own license. Gated models are the same story. There are only 89 of them, but they have a median of 1,137 likes compared to 54 for everything else. Gating is something Meta and Google do, so it's tracking the lab more than anything.
 
 ### The newer models are generation models
 
@@ -164,6 +166,7 @@ Almost a third of the top 3,000 (978) were created in 2026, and they're mostly `
 ## Caveats
 
 - The top 3,000 by 30-day downloads is a small slice of a Hub with millions of models, so everything here is about the winners.
+- One org (OpenMed) is 315 of the 3,000 models, so anything about token-classification or apache-2.0 is mostly about them.
 - Downloads count CI runs and automated pipelines, not just people.
 - 11% of the creation dates and 39% of the parameter counts are missing, and it isn't random (older models and non-safetensors formats).
 - Downloads and likes change every day, so a rerun will give you different numbers.
